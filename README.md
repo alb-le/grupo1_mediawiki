@@ -1,43 +1,5 @@
-# MediaWiki Docker Setup
 
-This project provides a simple, multi-container setup to run a MediaWiki instance using Docker and Docker Compose. It includes the MediaWiki application, a MariaDB database, and an Nginx web server, all managed by a simple shell script.
-
-## Prerequisites
-
-- Docker Engine
-- Docker Compose
-
-## Getting Started
-
-### 1. Configuration
-
-Before launching the wiki, you must create a `.env` file to configure your environment. This file controls the database credentials, wiki settings, and the port used to access the application.
-
-Create a file named `.env` in the project root and paste the following content into it. You can change these values to suit your needs.
-
-```
-# .env
-
-# MariaDB Settings
-MYSQL_ROOT_PASSWORD=supersecretrootpassword
-MYSQL_DATABASE=mediawiki
-MYSQL_USER=mediawiki_user
-MYSQL_PASSWORD=mediawiki_password
-
-# MediaWiki Settings
-MEDIAWIKI_SITE_NAME="My Awesome Wiki"
-MEDIAWIKI_ADMIN_USER=wikiadmin
-MEDIAWIKI_ADMIN_PASS=wikisupersecret
-MEDIAWIKI_SERVER=http://localhost:8080
-
-# Nginx Settings
-# This is the port on your host machine that will forward to the Nginx container.
-HOST_PORT=8080
-```
-
-### 2. Initialization
-
-Once the `.env` file is configured, run the initialization command:
+### Initialization
 
 ```bash
 ./manage_wiki.sh --init
@@ -49,7 +11,7 @@ This command will:
 - Start all the services in the background.
 - Automatically run the MediaWiki installation script using the settings from your `.env` file.
 
-### 3. Access Your Wiki
+### Access Your Wiki
 
 After the `init` script finishes, you can access your new wiki in your web browser. By default, it will be available at:
 
@@ -85,3 +47,7 @@ This project is configured to persist critical data on your host machine inside 
 -   **Database Files:** All MariaDB data is stored in `./mnt/db`.
 -   **MediaWiki Configuration:** Your generated `LocalSettings.php` is stored in `./mnt/config`.
 -   **MediaWiki Images/Uploads:** While not explicitly mapped in this version, uploaded files would be stored within the `mediawiki_code` volume. For a production setup, you would add a specific volume for `./mnt/images` mapped to the correct uploads directory.
+
+## Original project
+
+This project was forked from JimDunphy [project](https://github.com/JimDunphy/docker-mediawiki).
