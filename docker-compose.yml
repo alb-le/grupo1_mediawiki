@@ -1,0 +1,63 @@
+services:
+  mariadb:
+    image: mariadb:10.6
+    container_name: mediawiki-db
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    volumes:
+      - ./mnt/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mw-install:
+    image: mediawiki:1.43-fpm
+    container_name: mediawiki-installer
+    restart: "no"
+    env_file:
+      - ./.env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    volumes:
+      - mediawiki_code:/var/www/html
+      - ./mnt/config:/mnt/config
+    entrypoint: /bin/sh
+    command: ["-c", "if [ -f /mnt/config/LocalSettings.php ]; then echo \"LocalSettings.php exists; skipping install\"; else php maintenance/install.php --dbtype mysql --dbserver mariadb --dbname $${MYSQL_DATABASE} --dbuser $${MYSQL_USER} --dbpass $${MYSQL_PASSWORD} --installdbuser $${MYSQL_USER} --installdbpass $${MYSQL_PASSWORD} --server \"$${MEDIAWIKI_SERVER}\" --scriptpath '' \"$${MEDIAWIKI_SITE_NAME}\" \"$${MEDIAWIKI_ADMIN_USER}\" --pass \"$${MEDIAWIKI_ADMIN_PASS}\" --confpath /mnt/config && chown www-data:www-data /mnt/config/LocalSettings.php && php maintenance/update.php --conf /mnt/config/LocalSettings.php; fi"]
+
+  mediawiki:
+    image: mediawiki:1.43-fpm
+    container_name: mediawiki-app
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mw-install:
+        condition: service_completed_successfully
+    volumes:
+      - mediawiki_code:/var/www/html
+      - ./mnt/config:/var/www/html/config
+    command: >
+      sh -c "cp /var/www/html/config/LocalSettings.php /var/www/html/LocalSettings.php && php-fpm"
+
+  nginx:
+    image: nginx:latest
+    container_name: mediawiki-web
+    user: root
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT}:80"
+    volumes:
+      - mediawiki_code:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - mediawiki
+
+volumes:
+  db_data:
+  mediawiki_code:
