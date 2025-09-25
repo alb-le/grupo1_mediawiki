@@ -2,6 +2,7 @@
 ### Initialization
 
 ```bash
+chmod +rwx manage_wiki.sh
 ./manage_wiki.sh --init
 ```
 
